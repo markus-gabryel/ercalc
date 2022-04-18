@@ -5,6 +5,7 @@
 	 multiplication/0,
 	 division/0,
 
+	 split/1,
 	 interpret/1,
 	 compute/1,
 	 start/0,
@@ -59,14 +60,61 @@ division() ->
 
 %% ----------------------------------------------------------------------------
 
+split(Expression) -> split(Expression, []).
+
+split([], List) -> lists:reverse(List);
+
+split([Current | Rest], List) when Current >= $0 , Current =< $9 ->
+	{Value, _} = string:to_integer([Current]),
+	split(Rest, List, Value);
+
+split([Current | Rest], []) ->
+	if
+		Current == $  ->
+			split(Rest, []);
+
+		Current == $+ ; Current == $- ; Current == $* ; Current == $/ ->
+			Operator = list_to_atom([Current]),
+			split(Rest, [Operator, 0])
+	end;
+
+split([Current | Rest], List) ->
+	if
+		Current == $  ->
+			split(Rest, List);
+
+		Current == $+ ; Current == $- ; Current == $* ; Current == $/ ->
+			Operator = list_to_atom([Current]),
+			split(Rest, [Operator | List])
+	end.
+
+split([], List, Buffer) ->
+	split([], [Buffer | List]);
+
+split([Current | Rest], List, Buffer) when Current >= $0 , Current =< $9 ->
+	{Value, _} = string:to_integer([Current]),
+	split(Rest, List, Buffer * 10 + Value);
+
+split([Current | Rest], List, Buffer) ->
+	if
+		Current == $  ->
+			split(Rest, [Buffer | List]);
+
+		Current == $+ ; Current == $- ; Current == $* ; Current == $/ ->
+			Operator = list_to_atom([Current]),
+			split(Rest, [Operator, Buffer | List])
+	end.
+
+%% ----------------------------------------------------------------------------
+
 interpret(Expression) -> interpret(Expression, 0).
-	
+
 interpret([], Buffer) -> Buffer;
 
 interpret([Current | Rest], Buffer) ->
 	if
 		Current >= $0 , Current =< $9 ->
-			Value = element(1, string:to_integer([Current])),
+			{Value, _} = string:to_integer([Current]),
 			interpret(Rest, Buffer * 10 + Value);
 
 		Current == $+ ; Current == $- ; Current == $* ; Current == $/ ->
