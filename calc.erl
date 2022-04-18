@@ -65,23 +65,11 @@ interpret([], Buffer) -> Buffer;
 
 interpret([Current | Rest], Buffer) ->
 	if
-		[Current] == "0" ;
-		[Current] == "1" ;
-		[Current] == "2" ;
-		[Current] == "3" ;
-		[Current] == "4" ;
-		[Current] == "5" ;
-		[Current] == "6" ;
-		[Current] == "7" ;
-		[Current] == "8" ;
-		[Current] == "9" ->
+		Current >= $0 , Current =< $9 ->
 			Value = element(1, string:to_integer([Current])),
 			interpret(Rest, Buffer * 10 + Value);
 
-		[Current] == "+" ;
-		[Current] == "-" ;
-		[Current] == "*" ;
-		[Current] == "/" ->
+		Current == $+ ; Current == $- ; Current == $* ; Current == $/ ->
 			Operator = list_to_atom([Current]),
 			SubExpression = interpret(Rest, 0),
 			{Operator, Buffer, SubExpression}
