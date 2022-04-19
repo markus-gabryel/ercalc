@@ -89,22 +89,13 @@ split([Current | Rest], List) ->
 			split(Rest, [Operator | List])
 	end.
 
-split([], List, Buffer) ->
-	split([], [Buffer | List]);
+split([], List, Buffer) -> split([], [Buffer | List]);
 
 split([Current | Rest], List, Buffer) when Current >= $0 , Current =< $9 ->
 	{Value, _} = string:to_integer([Current]),
 	split(Rest, List, Buffer * 10 + Value);
 
-split([Current | Rest], List, Buffer) ->
-	if
-		Current == $  ->
-			split(Rest, [Buffer | List]);
-
-		Current == $+ ; Current == $- ; Current == $* ; Current == $/ ->
-			Operator = list_to_atom([Current]),
-			split(Rest, [Operator, Buffer | List])
-	end.
+split(Expression, List, Buffer) -> split(Expression, [Buffer | List]).
 
 %% ----------------------------------------------------------------------------
 
