@@ -6,6 +6,7 @@
 	 division/0,
 
 	 split/1,
+	 evaluate/1,
 	 interpret/1,
 	 compute/1,
 	 start/0,
@@ -107,21 +108,25 @@ split([Current | Rest], List, Buffer) ->
 
 %% ----------------------------------------------------------------------------
 
-interpret(Expression) -> interpret(Expression, 0).
+evaluate(X) when is_number(X) -> 0;
+evaluate(X) when X == '+' ; X == '-' -> 1;
+evaluate(X) when X == '*' ; X == '/' -> 2.
 
-interpret([], Buffer) -> Buffer;
+%% ----------------------------------------------------------------------------
 
-interpret([Current | Rest], Buffer) ->
+interpret([X, Operator, Y | Rest]) ->
+	interpret({Operator, X, Y}, Rest).
+
+interpret({Root, X, Y}, [Operator, Z | Rest]) ->
+	NeedsRotate = evaluate(Operator) =< evaluate(Root),
 	if
-		Current >= $0 , Current =< $9 ->
-			{Value, _} = string:to_integer([Current]),
-			interpret(Rest, Buffer * 10 + Value);
+		NeedsRotate ->
+			interpret({Operator, {Root, X, Y}, Z}, Rest);
+		true ->
+			interpret({Root, X, {Operator, Y, Z}}, Rest)
+	end;
 
-		Current == $+ ; Current == $- ; Current == $* ; Current == $/ ->
-			Operator = list_to_atom([Current]),
-			SubExpression = interpret(Rest, 0),
-			{Operator, Buffer, SubExpression}
-	end.
+interpret(Tree, []) -> Tree.
 
 %% ----------------------------------------------------------------------------
 
@@ -145,7 +150,7 @@ compute(Expression) when is_tuple(Expression) ->
 			Value
 	end;
 
-compute(Expression) -> compute(interpret(Expression)).
+compute(Expression) -> compute(interpret(split(Expression))).
 
 %% ----------------------------------------------------------------------------
 
